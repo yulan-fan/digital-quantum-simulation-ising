@@ -2,7 +2,7 @@
 
 This repository develops and validates the real-time dynamics of a two-qubit transverse-field Ising model,
 
-$H=-J*Z_0Z_1-h*(X_0+X_1)$,
+$$H=-J\*Z_0Z_1-h\*(X_0+X_1)$$,
 
 
 using both exact matrix evolution and gate-based Trotter approximations. The project was built as a compact, self-contained study of how a many-body Hamiltonian is translated from operator algebra into numerical evolution and then into a digital quantum circuit.
@@ -77,7 +77,7 @@ $$
 U_2(t;r)=\left[e^{-iH_Xt/(2r)}e^{-iH_{ZZ}t/r}e^{-iH_Xt/(2r)}\right]^r.
 $$
 
-For fixed total time, their typical global operator/state errors scale as ($O(r^{-1})$) and ($O(r^{-2})$), respectively. In the small-error regime, the corresponding state infidelities commonly scale as ($O(r^{-2})$) and ($O(r^{-4})$).
+For fixed total time, their typical global operator/state errors scale as ($$O(r^{-1})$$) and ($$O(r^{-2})$$), respectively. In the small-error regime, the corresponding state infidelities commonly scale as ($$O(r^{-2})$$) and ($$O(r^{-4})$$).
 
 ## Shared helper modules
 
