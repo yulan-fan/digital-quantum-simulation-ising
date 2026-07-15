@@ -1,0 +1,539 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.25cm]{geometry}
+\usepackage{amsmath,amssymb,bm,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\hypersetup{pdftitle={Analytical Derivations for Digital Quantum Simulation of a Two-Qubit Transverse-Field Ising Model},pdfauthor={Yulan Fan},pdfsubject={Exact and Trotterized dynamics of a two-qubit transverse-field Ising model}}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+
+\definecolor{accent}{RGB}{30,70,120}
+\newcommand{\ket}[1]{\left|#1\right\rangle}
+\newcommand{\bra}[1]{\left\langle#1\right|}
+\newcommand{\braket}[2]{\left\langle#1\middle|#2\right\rangle}
+\newcommand{\op}[1]{\widehat{#1}}
+\newcommand{\I}{\mathbb{I}}
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\e}{\mathrm{e}}
+\newcommand{\ii}{\mathrm{i}}
+\newcommand{\Order}{\mathcal{O}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{Two-Qubit Ising Simulation}
+\rhead{Analytical Derivations}
+\cfoot{\thepage}
+\setlength{\headheight}{14pt}
+
+\title{\textbf{Analytical Derivations for Digital Quantum Simulation\\of a Two-Qubit Transverse-Field Ising Model}}
+\author{Yulan Fan}
+\date{July 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This note collects the hand calculations underlying a three-notebook implementation of exact and Trotterized real-time dynamics for a two-qubit transverse-field Ising model. The derivations proceed from basis states and tensor-product operators to the exact spectrum and time evolution, and then to first- and second-order product formulas implemented with $RX$ and $RZZ$ gates. The emphasis is on transparent operator algebra, independent validation, and the distinction between state error, infidelity, observable error, and circuit cost.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Model and conventions}
+
+We study the two-qubit Hamiltonian
+\begin{equation}
+H=-J Z_0 Z_1-h(X_0+X_1),
+\label{eq:H}
+\end{equation}
+where $J$ is the Ising coupling and $h$ is the transverse-field strength. We use units with $\hbar=1$ and the ordered computational basis
+\begin{equation}
+\bigl(\ket{00},\ket{01},\ket{10},\ket{11}\bigr).
+\end{equation}
+The one-qubit basis vectors and Pauli matrices are
+\begin{equation}
+\ket{0}=\begin{pmatrix}1\\0\end{pmatrix},\qquad
+\ket{1}=\begin{pmatrix}0\\1\end{pmatrix},
+\end{equation}
+\begin{equation}
+X=\begin{pmatrix}0&1\\1&0\end{pmatrix},\qquad
+Y=\begin{pmatrix}0&-\ii\\ \ii&0\end{pmatrix},\qquad
+Z=\begin{pmatrix}1&0\\0&-1\end{pmatrix}.
+\end{equation}
+The two-qubit basis vectors are
+\begin{equation}
+\ket{00}=\begin{pmatrix}1\\0\\0\\0\end{pmatrix},\quad
+\ket{01}=\begin{pmatrix}0\\1\\0\\0\end{pmatrix},\quad
+\ket{10}=\begin{pmatrix}0\\0\\1\\0\end{pmatrix},\quad
+\ket{11}=\begin{pmatrix}0\\0\\0\\1\end{pmatrix}.
+\end{equation}
+
+\section{Two-qubit operators and Hamiltonian matrix}
+
+The local operators are
+\begin{equation}
+X_0=X\otimes \I,\qquad X_1=\I\otimes X,
+\end{equation}
+\begin{equation}
+Z_0=Z\otimes \I,\qquad Z_1=\I\otimes Z,
+\end{equation}
+and
+\begin{equation}
+Z_0Z_1=Z\otimes Z.
+\end{equation}
+Their explicit matrices are
+\begin{equation}
+X_0=
+\begin{pmatrix}
+0&0&1&0\\
+0&0&0&1\\
+1&0&0&0\\
+0&1&0&0
+\end{pmatrix},\qquad
+X_1=
+\begin{pmatrix}
+0&1&0&0\\
+1&0&0&0\\
+0&0&0&1\\
+0&0&1&0
+\end{pmatrix},
+\end{equation}
+\begin{equation}
+Z_0Z_1=\operatorname{diag}(1,-1,-1,1).
+\end{equation}
+A matrix can be reconstructed from its action on an ordered basis: the $j$th column is the vector obtained by applying the operator to the $j$th basis state. For example,
+\begin{equation}
+X_0\ket{00}=\ket{10},\quad
+X_0\ket{01}=\ket{11},\quad
+X_0\ket{10}=\ket{00},\quad
+X_0\ket{11}=\ket{01},
+\end{equation}
+which immediately gives the columns of $X_0$.
+
+Substituting these operators into Eq.~\eqref{eq:H} gives
+\begin{equation}
+H=
+\begin{pmatrix}
+-J&-h&-h&0\\
+-h&J&0&-h\\
+-h&0&J&-h\\
+0&-h&-h&-J
+\end{pmatrix}.
+\label{eq:Hmatrix}
+\end{equation}
+The matrix is Hermitian, as required for a physical Hamiltonian.
+
+\section{Symmetry-adapted basis and exact spectrum}
+
+Introduce the symmetric and antisymmetric combinations
+\begin{equation}
+\ket{\phi_\pm}=\frac{\ket{00}\pm\ket{11}}{\sqrt{2}},\qquad
+\ket{\psi_\pm}=\frac{\ket{01}\pm\ket{10}}{\sqrt{2}}.
+\end{equation}
+The antisymmetric states are eigenstates of the full Hamiltonian. Direct application gives
+\begin{equation}
+H\ket{\phi_-}=-J\ket{\phi_-},
+\end{equation}
+\begin{equation}
+H\ket{\psi_-}=+J\ket{\psi_-}.
+\end{equation}
+The remaining symmetric subspace is spanned by $\{\ket{\phi_+},\ket{\psi_+}\}$. In this basis,
+\begin{equation}
+H_{\mathrm{sym}}=
+\begin{pmatrix}
+-J&-2h\\
+-2h&J
+\end{pmatrix}.
+\end{equation}
+Define
+\begin{equation}
+\Omega=\sqrt{J^2+4h^2}.
+\end{equation}
+Since
+\begin{equation}
+H_{\mathrm{sym}}^2=\Omega^2\I,
+\end{equation}
+the two eigenvalues of this block are $\pm\Omega$. The full spectrum is therefore
+\begin{equation}
+\boxed{E\in\{-\Omega,-J,J,\Omega\}}.
+\end{equation}
+
+\section{Exact time evolution from \texorpdfstring{$\ket{00}$}{|00>}}
+
+The initial state decomposes as
+\begin{equation}
+\ket{00}=\frac{\ket{\phi_+}+\ket{\phi_-}}{\sqrt{2}}.
+\end{equation}
+The antisymmetric component evolves trivially:
+\begin{equation}
+\e^{-\ii Ht}\ket{\phi_-}=\e^{\ii Jt}\ket{\phi_-}.
+\end{equation}
+For the symmetric block, the identity $H_{\mathrm{sym}}^2=\Omega^2\I$ gives
+\begin{equation}
+\e^{-\ii H_{\mathrm{sym}}t}
+=\cos(\Omega t)\I-\ii\frac{\sin(\Omega t)}{\Omega}H_{\mathrm{sym}}.
+\end{equation}
+Acting on $\ket{\phi_+}$,
+\begin{equation}
+\e^{-\ii H_{\mathrm{sym}}t}\ket{\phi_+}
+=\left[\cos(\Omega t)+\ii\frac{J}{\Omega}\sin(\Omega t)\right]\ket{\phi_+}
++\ii\frac{2h}{\Omega}\sin(\Omega t)\ket{\psi_+}.
+\end{equation}
+Hence
+\begin{align}
+\ket{\psi(t)}=
+\frac{1}{\sqrt{2}}\Bigg\{&
+\e^{\ii Jt}\ket{\phi_-}
++\left[\cos(\Omega t)+\ii\frac{J}{\Omega}\sin(\Omega t)\right]\ket{\phi_+}
+\nonumber\\
+&+\ii\frac{2h}{\Omega}\sin(\Omega t)\ket{\psi_+}
+\Bigg\}.
+\end{align}
+Returning to the computational basis gives
+\begin{equation}
+\boxed{
+\begin{aligned}
+a_{00}(t)&=\frac{1}{2}\left[\e^{\ii Jt}+\cos(\Omega t)+\ii\frac{J}{\Omega}\sin(\Omega t)\right],\\
+a_{11}(t)&=\frac{1}{2}\left[-\e^{\ii Jt}+\cos(\Omega t)+\ii\frac{J}{\Omega}\sin(\Omega t)\right],\\
+a_{01}(t)&=a_{10}(t)=\ii\frac{h}{\Omega}\sin(\Omega t).
+\end{aligned}}
+\label{eq:exactamps}
+\end{equation}
+The basis probabilities are $P_{ij}(t)=|a_{ij}(t)|^2$. In particular,
+\begin{equation}
+P_{01}(t)=P_{10}(t)=\frac{h^2}{\Omega^2}\sin^2(\Omega t).
+\end{equation}
+
+\section{Observables}
+
+The longitudinal magnetization per spin is
+\begin{equation}
+M_z=\frac{Z_0+Z_1}{2}.
+\end{equation}
+It has eigenvalues $+1,0,0,-1$ on the ordered computational basis, so
+\begin{equation}
+\boxed{\langle M_z\rangle=P_{00}-P_{11}}.
+\end{equation}
+The nearest-neighbor spin correlation is
+\begin{equation}
+C_{zz}=Z_0Z_1,
+\end{equation}
+with eigenvalues $+1,-1,-1,+1$, hence
+\begin{equation}
+\boxed{\langle Z_0Z_1\rangle=P_{00}-P_{01}-P_{10}+P_{11}}.
+\end{equation}
+These observables compress the information in the full state. For example, $\langle M_z\rangle=0$ does not determine a unique quantum state.
+
+\section{Why the Hamiltonian terms cannot be factorized exactly}
+
+Split the Hamiltonian into
+\begin{equation}
+H=H_{ZZ}+H_X,
+\end{equation}
+where
+\begin{equation}
+H_{ZZ}=-JZ_0Z_1,\qquad H_X=-h(X_0+X_1).
+\end{equation}
+Using $[Z,X]=2\ii Y$,
+\begin{align}
+[Z_0Z_1,X_0]&=2\ii Y_0Z_1,\\
+[Z_0Z_1,X_1]&=2\ii Z_0Y_1.
+\end{align}
+Therefore
+\begin{equation}
+\boxed{[H_{ZZ},H_X]=2\ii Jh\left(Y_0Z_1+Z_0Y_1\right)\neq0.}
+\end{equation}
+Consequently,
+\begin{equation}
+\e^{-\ii(H_{ZZ}+H_X)t}\neq
+\e^{-\ii H_{ZZ}t}\e^{-\ii H_Xt}
+\end{equation}
+for a finite time interval in general.
+
+As a state-level check,
+\begin{equation}
+[Z_0Z_1,X_0+X_1]\ket{10}=2\ket{00}+2\ket{11}.
+\end{equation}
+This is consistent with the operator identity above, but a single input-output pair does not uniquely determine the full operator.
+
+\section{Useful exponential identities}
+
+If an operator $P$ satisfies $P^2=\I$, then its exponential separates into even and odd powers:
+\begin{align}
+\e^{\ii aP}
+&=\I+\ii aP+\frac{(\ii aP)^2}{2!}+\cdots\\
+&=\cos(a)\I+\ii\sin(a)P.
+\end{align}
+This applies to every Pauli operator and to $Z_0Z_1$. Thus
+\begin{equation}
+\e^{\ii aX}=\cos(a)\I+\ii\sin(a)X,
+\end{equation}
+\begin{equation}
+\e^{\ii aZ_0Z_1}=\cos(a)\I+\ii\sin(a)Z_0Z_1.
+\end{equation}
+Since $Z_0Z_1$ has eigenvalues $+1,-1,-1,+1$,
+\begin{equation}
+\e^{\ii aZ_0Z_1}=\operatorname{diag}(\e^{\ii a},\e^{-\ii a},\e^{-\ii a},\e^{\ii a}).
+\end{equation}
+The minus sign of an eigenvalue enters the exponent; it is not an overall prefactor.
+
+\section{First-order Lie-Trotter formula}
+
+For a total evolution time $t$ divided into $r$ steps,
+\begin{equation}
+\Delta t=\frac{t}{r}.
+\end{equation}
+The first-order approximation used here is
+\begin{equation}
+\boxed{U_1(t;r)=\left[\e^{-\ii H_{ZZ}\Delta t}\e^{-\ii H_X\Delta t}\right]^r.}
+\end{equation}
+A Taylor expansion shows that the exact and factorized short-time evolutions agree through first order in $\Delta t$; their difference begins at $\Order(\Delta t^2)$ and is controlled by the commutator. Repeating $r$ steps over fixed total time gives a typical global operator/state error of order
+\begin{equation}
+\Order\left(\frac{t^2}{r}\right).
+\end{equation}
+
+\subsection{Gate mapping}
+
+Because $[X_0,X_1]=0$,
+\begin{equation}
+\e^{-\ii H_X\Delta t}
+=\e^{\ii h\Delta t X_0}\e^{\ii h\Delta t X_1}.
+\end{equation}
+Qiskit defines
+\begin{equation}
+RX(\theta)=\e^{-\ii\theta X/2},
+\end{equation}
+so each transverse-field rotation uses
+\begin{equation}
+\boxed{\theta_X=-2h\Delta t.}
+\end{equation}
+Similarly,
+\begin{equation}
+\e^{-\ii H_{ZZ}\Delta t}=\e^{\ii J\Delta t Z_0Z_1},
+\end{equation}
+while
+\begin{equation}
+RZZ(\theta)=\e^{-\ii\theta Z_0Z_1/2},
+\end{equation}
+which gives
+\begin{equation}
+\boxed{\theta_{ZZ}=-2J\Delta t.}
+\end{equation}
+
+\subsection{One first-order step acting on \texorpdfstring{$\ket{00}$}{|00>}}
+
+Define
+\begin{equation}
+c=\cos(h\Delta t),\qquad s=\sin(h\Delta t),
+\end{equation}
+\begin{equation}
+p=\e^{\ii J\Delta t},\qquad q=\e^{-\ii J\Delta t}.
+\end{equation}
+The transverse-field part gives
+\begin{align}
+\e^{-\ii H_X\Delta t}\ket{00}
+&=(c\ket{0}+\ii s\ket{1})\otimes(c\ket{0}+\ii s\ket{1})\\
+&=c^2\ket{00}+\ii cs\ket{01}+\ii cs\ket{10}-s^2\ket{11}.
+\end{align}
+The $ZZ$ evolution then adds phases according to parity:
+\begin{equation}
+\boxed{
+U_{1,\mathrm{step}}\ket{00}
+=pc^2\ket{00}+\ii qcs\ket{01}+\ii qcs\ket{10}-ps^2\ket{11}.}
+\label{eq:firststep}
+\end{equation}
+The $ZZ$ gate does not change probabilities immediately, but its relative phases affect subsequent interference after later noncommuting rotations.
+
+\section{Second-order symmetric Suzuki-Trotter formula}
+
+The symmetric second-order step is
+\begin{equation}
+\boxed{S_2(\Delta t)=
+\e^{-\ii H_X\Delta t/2}
+\e^{-\ii H_{ZZ}\Delta t}
+\e^{-\ii H_X\Delta t/2}.}
+\label{eq:S2}
+\end{equation}
+To verify its order, define $A=-\ii H_X$ and $B=-\ii H_{ZZ}$. Then
+\begin{equation}
+S_2(\Delta t)=\e^{A\Delta t/2}\e^{B\Delta t}\e^{A\Delta t/2}.
+\end{equation}
+Expanding each exponential through second order and multiplying while preserving operator order gives
+\begin{align}
+S_2(\Delta t)
+={}&\I+(A+B)\Delta t\\
+&+\frac{1}{2}\left(A^2+AB+BA+B^2\right)\Delta t^2
++\Order(\Delta t^3).
+\end{align}
+Since
+\begin{equation}
+(A+B)^2=A^2+AB+BA+B^2,
+\end{equation}
+this agrees with
+\begin{equation}
+\e^{(A+B)\Delta t}
+=\I+(A+B)\Delta t+\frac{1}{2}(A+B)^2\Delta t^2+\Order(\Delta t^3).
+\end{equation}
+Therefore the local error is $\Order(\Delta t^3)$, and for fixed total time the typical global operator/state error is
+\begin{equation}
+\Order\left(\frac{t^3}{r^2}\right).
+\end{equation}
+
+\subsection{Gate mapping}
+
+The two half-field evolutions use
+\begin{equation}
+\boxed{\theta_{X,\mathrm{half}}=-h\Delta t,}
+\end{equation}
+whereas the central interaction uses
+\begin{equation}
+\boxed{\theta_{ZZ}=-2J\Delta t.}
+\end{equation}
+One symmetric step is therefore represented chronologically in a circuit by
+\begin{equation}
+RX_0(-h\Delta t)\,RX_1(-h\Delta t)\,RZZ(-2J\Delta t)\,
+RX_0(-h\Delta t)\,RX_1(-h\Delta t).
+\end{equation}
+
+\subsection{One second-order step acting on \texorpdfstring{$\ket{00}$}{|00>}}
+
+Let
+\begin{equation}
+c=\cos\left(\frac{h\Delta t}{2}\right),\qquad
+s=\sin\left(\frac{h\Delta t}{2}\right),
+\end{equation}
+and again define $p=\e^{\ii J\Delta t}$ and $q=\e^{-\ii J\Delta t}$. After the first half-field step,
+\begin{equation}
+\ket{\chi_1}=c^2\ket{00}+\ii cs\ket{01}+\ii cs\ket{10}-s^2\ket{11}.
+\end{equation}
+After the full $ZZ$ step,
+\begin{equation}
+\ket{\chi_2}=pc^2\ket{00}+\ii qcs\ket{01}+\ii qcs\ket{10}-ps^2\ket{11}.
+\end{equation}
+Applying the second half-field step and collecting equal basis states gives
+\begin{align}
+a_{00}&=p(c^4+s^4)-2qc^2s^2,\\
+a_{01}=a_{10}&=\ii(p+q)cs(c^2-s^2),\\
+a_{11}&=-2(p+q)c^2s^2.
+\end{align}
+Use
+\begin{equation}
+p+q=2\cos(J\Delta t),
+\end{equation}
+\begin{equation}
+2cs=\sin(h\Delta t),\qquad c^2-s^2=\cos(h\Delta t),
+\end{equation}
+and
+\begin{equation}
+4c^2s^2=\sin^2(h\Delta t).
+\end{equation}
+The compact result is
+\begin{equation}
+\boxed{
+\begin{aligned}
+a_{00}&=\cos(J\Delta t)\cos^2(h\Delta t)+\ii\sin(J\Delta t),\\
+a_{01}=a_{10}&=\ii\cos(J\Delta t)\sin(h\Delta t)\cos(h\Delta t),\\
+a_{11}&=-\cos(J\Delta t)\sin^2(h\Delta t).
+\end{aligned}}
+\label{eq:secondstep}
+\end{equation}
+The equality $a_{01}=a_{10}$ follows from exchange symmetry and is also a useful debugging condition.
+
+\subsection{Limiting-case checks}
+
+If $h=0$, Eq.~\eqref{eq:secondstep} becomes
+\begin{equation}
+\ket{\psi}=\e^{\ii J\Delta t}\ket{00}.
+\end{equation}
+If $J=0$, it becomes the exact product of two independent $X$ rotations:
+\begin{align}
+\ket{\psi}={}&\cos^2(h\Delta t)\ket{00}
++\ii\sin(h\Delta t)\cos(h\Delta t)(\ket{01}+\ket{10})\\
+&-\sin^2(h\Delta t)\ket{11}.
+\end{align}
+The amplitudes also satisfy
+\begin{equation}
+|a_{00}|^2+|a_{01}|^2+|a_{10}|^2+|a_{11}|^2=1.
+\end{equation}
+
+\section{Error measures and convergence}
+
+For normalized pure states, the fidelity is
+\begin{equation}
+F(\psi_{\mathrm{exact}},\psi_{\mathrm{approx}})
+=\left|\braket{\psi_{\mathrm{exact}}}{\psi_{\mathrm{approx}}}\right|^2.
+\end{equation}
+The infidelity is $1-F$. A global phase leaves the fidelity equal to one even though direct component-wise comparison may fail.
+
+For a first-order product formula, the typical state/operator error scales as $r^{-1}$; for the symmetric second-order formula it scales as $r^{-2}$. In a generic small-error regime, the infidelity is quadratic in the perpendicular state error, leading commonly to
+\begin{equation}
+1-F_1\sim r^{-2},\qquad 1-F_2\sim r^{-4}.
+\end{equation}
+These are asymptotic expectations rather than guarantees at every coarse step size or special evolution time. Coherent cancellation can make finite-step behavior non-monotonic.
+
+Observable errors are defined separately, for example
+\begin{equation}
+\Delta M_z=
+\left|\langle M_z\rangle_{\mathrm{approx}}-
+\langle M_z\rangle_{\mathrm{exact}}\right|.
+\end{equation}
+A small error in one observable does not imply that the complete statevector is accurate.
+
+\section{Circuit cost}
+
+A first-order step contains two $RX$ gates and one $RZZ$ gate. An explicit second-order step contains four $RX$ gates and one $RZZ$ gate. Therefore, comparing methods at equal step count is not the same as comparing them at equal circuit cost.
+
+In consecutive second-order steps, adjacent half-field rotations can be combined:
+\begin{equation}
+RX(-h\Delta t)RX(-h\Delta t)=RX(-2h\Delta t).
+\end{equation}
+Before hardware execution, further decomposition and transpilation would be required, and the cost of $RZZ$ depends on the available native gate set and connectivity.
+
+\section{Numerical reference point}
+
+For the values used frequently in the notebooks,
+\begin{equation}
+J=1.0,\qquad h=0.7,
+\end{equation}
+we find
+\begin{equation}
+\Omega=\sqrt{1+4(0.7)^2}\approx1.72046505,
+\end{equation}
+and the exact spectrum is approximately
+\begin{equation}
+(-1.72046505,-1,1,1.72046505).
+\end{equation}
+For one symmetric second-order step with $\Delta t=1$,
+\begin{equation}
+\ket{\psi_{S_2}}\approx
+(0.31606797+0.84147098\ii)\ket{00}
++0.26622038\ii\ket{01}
++0.26622038\ii\ket{10}
+-0.22423433\ket{11}.
+\end{equation}
+This reference value is useful for checking parameter ordering and gate-angle conventions.
+
+\section{Implementation checklist}
+
+A reliable notebook workflow should include the following independent checks:
+\begin{enumerate}[leftmargin=1.5em]
+\item Verify the action of each tensor-product operator on all four basis states.
+\item Confirm that $H=H^\dagger$.
+\item Compare numerical eigenvalues with $(-\Omega,-J,J,\Omega)$.
+\item Compare exact matrix evolution with Eq.~\eqref{eq:exactamps}.
+\item Compare one-step Qiskit statevectors with Eqs.~\eqref{eq:firststep} and \eqref{eq:secondstep}.
+\item Check normalization and exchange symmetry $a_{01}=a_{10}$.
+\item Print the actual $RX$ and $RZZ$ angles when debugging.
+\item Distinguish a true component mismatch from an irrelevant global phase by computing fidelity.
+\item Restart the notebook kernel and run all cells before committing results.
+\end{enumerate}
+
+\section{Summary}
+
+The two-qubit model is small enough to solve exactly but already contains the central ingredients of digital quantum simulation: noncommuting Hamiltonian terms, tensor-product operators, basis-dependent measurements, product-formula errors, and a trade-off between accuracy and circuit resources. The exact solution provides a controlled reference against which the gate-level approximations can be validated. The first-order formula supplies the simplest digital decomposition, while the symmetric second-order formula demonstrates how time-symmetric operator ordering cancels the leading local error.
+
+\end{document}
