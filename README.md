@@ -2,9 +2,8 @@
 
 This repository develops and validates the real-time dynamics of a two-qubit transverse-field Ising model,
 
-\[
-H=-J\,Z_0Z_1-h\left(X_0+X_1\right),
-\]
+$H=-J*Z_0Z_1-h*(X_0+X_1)$,
+
 
 using both exact matrix evolution and gate-based Trotter approximations. The project was built as a compact, self-contained study of how a many-body Hamiltonian is translated from operator algebra into numerical evolution and then into a digital quantum circuit.
 
@@ -16,7 +15,7 @@ The repository covers:
 
 - construction of one- and two-qubit basis states and Pauli operators;
 - assembly and diagonalization of the two-qubit Ising Hamiltonian;
-- exact real-time evolution from the initial state \(|00\rangle\);
+- exact real-time evolution from the initial state $|00\rangle$;
 - calculation of basis-state probabilities, magnetization, and spin correlation;
 - first-order Lie-Trotter decomposition and its gate-level implementation;
 - second-order symmetric Suzuki-Trotter decomposition;
@@ -32,53 +31,53 @@ The repository covers:
 
 A typeset companion containing the analytical derivations is available here:
 
-- [`docs/analytical_derivations.pdf`](docs/analytical_derivations.pdf)
+- [`Docs/analytical_derivations.pdf`](docs/analytical_derivations.pdf)
 
 ## Main analytical results
 
 Using the symmetric basis
 
-\[
+$$
 |\phi_\pm\rangle=\frac{|00\rangle\pm|11\rangle}{\sqrt{2}},
 \qquad
 |\psi_\pm\rangle=\frac{|01\rangle\pm|10\rangle}{\sqrt{2}},
-\]
+$$
 
 the Hamiltonian separates into two one-dimensional sectors and one two-dimensional symmetric sector. Defining
 
-\[
+$$
 \Omega=\sqrt{J^2+4h^2},
-\]
+$$
 
 the exact energy spectrum is
 
-\[
+$$
 E\in\{-\Omega,-J,J,\Omega\}.
-\]
+$$
 
-For the initial state \(|00\rangle\), the exact amplitudes are
+For the initial state $(|00\rangle)$, the exact amplitudes are
 
-\[
+$$
 \begin{aligned}
 a_{00}(t)&=\frac{1}{2}\left[e^{iJt}+\cos(\Omega t)+i\frac{J}{\Omega}\sin(\Omega t)\right],\\
 a_{11}(t)&=\frac{1}{2}\left[-e^{iJt}+\cos(\Omega t)+i\frac{J}{\Omega}\sin(\Omega t)\right],\\
 a_{01}(t)&=a_{10}(t)=i\frac{h}{\Omega}\sin(\Omega t).
 \end{aligned}
-\]
+$$
 
 The first-order approximation is
 
-\[
+$$
 U_1(t;r)=\left[e^{-iH_{ZZ}t/r}e^{-iH_Xt/r}\right]^r,
-\]
+$$
 
 while the symmetric second-order approximation is
 
-\[
+$$
 U_2(t;r)=\left[e^{-iH_Xt/(2r)}e^{-iH_{ZZ}t/r}e^{-iH_Xt/(2r)}\right]^r.
-\]
+$$
 
-For fixed total time, their typical global operator/state errors scale as \(O(r^{-1})\) and \(O(r^{-2})\), respectively. In the small-error regime, the corresponding state infidelities commonly scale as \(O(r^{-2})\) and \(O(r^{-4})\).
+For fixed total time, their typical global operator/state errors scale as ($O(r^{-1})$) and ($O(r^{-2})$), respectively. In the small-error regime, the corresponding state infidelities commonly scale as ($O(r^{-2})$) and ($O(r^{-4})$).
 
 ## Shared helper modules
 
@@ -116,7 +115,7 @@ The implementation uses several independent checks:
 - numerical eigenvalues are compared with the analytical spectrum;
 - exact and analytical statevectors are compared component by component;
 - hand-derived one-step Trotter states are compared with Qiskit statevectors;
-- normalization, exchange symmetry, and limiting cases such as \(h=0\) and \(J=0\) are verified;
+- normalization, exchange symmetry, and limiting cases such as ($h=0$) and ($J=0$) are verified;
 - convergence is studied using both state fidelity and observable errors.
 
 ## Limitations and possible extensions
